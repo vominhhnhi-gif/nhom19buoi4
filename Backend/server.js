@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
+const cors = require('cors');
+app.use(cors({ origin: 'http://localhost:5173' }));
 // users routes
 const userRouter = require('./routes/user');
 app.use('/users', userRouter);
