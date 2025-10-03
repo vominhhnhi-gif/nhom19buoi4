@@ -11,6 +11,11 @@ const AddUser = ({ onSuccess }) => {
       alert('Vui lòng nhập đầy đủ thông tin!');
       return;
     }
+    e.preventDefault(); 
+  if (!/\S+@\S+\.\S+/.test(email)) { 
+      alert("Email không hợp lệ"); 
+      return; 
+    } 
 
     axios.post('http://localhost:3000/users', { name, email })
       .then(() => {
