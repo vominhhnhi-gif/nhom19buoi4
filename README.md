@@ -27,9 +27,9 @@ Dự án này là một ứng dụng quản lý người dùng, cho phép thực
 ## 👥 Đóng góp — Thành viên nhóm
 | Thành viên | Vai trò / Đóng góp |
 |-------------|--------------------|
-| **Võ Minh Nhí** | Backend (API, MongoDB) |
-| **Ngô Trần Phước Duy** | Frontend (UI, styles) |
-| **Nguyễn Phú Quý** | Kiểm thử, tài liệu |
+| **Võ Minh Nhí** | Backend (API,UI ) |
+| **Ngô Trần Phước Duy** | Frontend ( Tài liệu , styles) |
+| **Nguyễn Phú Quý** | Kiểm thử, MongoDB |
 
 ## 📂 Cấu trúc thư mục
 ```
