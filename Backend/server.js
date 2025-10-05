@@ -15,7 +15,12 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Thêm CORS middleware
 const cors = require('cors');
+<<<<<<< HEAD
 app.use(cors({ origin: 'http://localhost:5173' }));
+=======
+app.use(cors({ origin: '*' }));
+
+>>>>>>> Backend-Nhi
 
 // users routes
 const userRouter = require('./routes/user');
