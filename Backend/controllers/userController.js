@@ -1,12 +1,9 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 const User = require('../models/User'); // Import model User
-=======
-const User = require('../models/user'); // Import model User
->>>>>>> Backend-Nhi
-=======
+
+
+
 const User = require('../models/User'); // Import model User
->>>>>>> 8a7b5a04666ad63b4afc0cb264ee7998af8250f3
 
 // GET /users (Lấy tất cả users)
 exports.getUsers = async (req, res) => {
@@ -32,11 +29,7 @@ exports.createUser = async (req, res) => {
         // Lỗi 400 thường là lỗi validation (ví dụ: email đã tồn tại)
         res.status(400).json({ message: err.message });
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 8a7b5a04666ad63b4afc0cb264ee7998af8250f3
+
 };
 
 // Put /users/:id (Cập nhật user theo ID)
@@ -66,8 +59,5 @@ exports.deleteUser = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
-<<<<<<< HEAD
->>>>>>> Backend-Nhi
-=======
->>>>>>> 8a7b5a04666ad63b4afc0cb264ee7998af8250f3
+
 };
