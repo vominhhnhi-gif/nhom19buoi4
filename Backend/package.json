@@ -19,9 +19,12 @@
     "express": "^5.1.0",
     "mongoose": "^8.18.3",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "mongose": "^0.0.2-security",
 =======
 >>>>>>> Backend-Nhi
+=======
+>>>>>>> 8a7b5a04666ad63b4afc0cb264ee7998af8250f3
     "nodemon": "^3.1.10"
   }
 }
