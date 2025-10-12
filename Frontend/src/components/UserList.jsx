@@ -1,59 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import axios from 'axios';
 
-const UserList = ({ onEditUser, refreshTrigger }) => {
-  const [users, setUsers] = useState([]);
-
-  const fetchUsers = () => {
-    axios.get('http://localhost:3000/users')
-      .then(response => setUsers(response.data))
-      .catch(error => console.log(error));
+const UserList = ({ users = [], onUsersChanged }) => {
+  const handleDelete = async (id) => {
+    if (!confirm('Bạn có chắc muốn xóa user này?')) return;
+    try {
+      await axios.delete(`http://localhost:3000/users/${id}`);
+      if (onUsersChanged) onUsersChanged();
+    } catch (err) {
+      console.error(err);
+      alert('Xóa thất bại');
+    }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [refreshTrigger]);
-
-  const handleDelete = (userId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa user này?')) {
-      axios.delete(`http://localhost:3000/users/${userId}`)
-        .then(() => {
-          alert('Xóa user thành công!');
-          fetchUsers(); // Refresh danh sách sau khi xóa
-        })
-        .catch(error => {
-          console.log(error);
-          alert('Có lỗi khi xóa user!');
-        });
+  const handleEdit = async (user) => {
+    const newName = prompt('Tên mới:', user.name);
+    const newEmail = prompt('Email mới:', user.email);
+    if (!newName || !newEmail) return;
+    try {
+      await axios.put(`http://localhost:3000/users/${user._id}`, { name: newName, email: newEmail });
+      if (onUsersChanged) onUsersChanged();
+    } catch (err) {
+      console.error(err);
+      alert('Cập nhật thất bại');
     }
   };
 
   return (
-    <div>
-      <h2>Danh Sách User</h2>
-      <ul>
-        {users.map(user => (
-          <li key={user.id} style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ccc' }}>
-            <div>
-              <strong>{user.name}</strong> - {user.email}
-            </div>
-            <div style={{ marginTop: '5px' }}>
-              <button 
-                onClick={() => onEditUser(user)}
-                style={{ marginRight: '10px', padding: '5px 10px', backgroundColor: '#007bff', color: 'white', border: 'none', cursor: 'pointer' }}
-              >
-                Sửa
-              </button>
-              <button 
-                onClick={() => handleDelete(user.id)}
-                style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', cursor: 'pointer' }}
-              >
-                Xóa
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+    <div className="card user-list">
+      <h3>Danh sách User</h3>
+      {users.length === 0 ? (
+        <p>Chưa có user nào</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>Tên</th>
+              <th>Email</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(user => (
+              <tr key={user._id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>
+                  <button className="btn small" onClick={() => handleEdit(user)}>Sửa</button>
+                  <button className="btn small danger" onClick={() => handleDelete(user._id)}>Xoá</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };
