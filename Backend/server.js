@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 app.use(express.json());
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 // Kết nối MongoDB
 const mongoose = require('mongoose');
@@ -15,21 +17,20 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Thêm CORS middleware
 const cors = require('cors');
-<<<<<<< HEAD
-<<<<<<< HEAD
-app.use(cors({ origin: 'http://localhost:5173' }));
-=======
 app.use(cors({ origin: '*' }));
 
->>>>>>> Backend-Nhi
-=======
-app.use(cors({ origin: '*' }));
-
->>>>>>> 8a7b5a04666ad63b4afc0cb264ee7998af8250f3
 
 // users routes
 const userRouter = require('./routes/user');
 app.use('/users', userRouter);
+
+// auth routes
+const authRouter = require('./routes/auth');
+app.use('/auth', authRouter);
+
+// profile routes
+const profileRouter = require('./routes/profile');
+app.use('/profile', profileRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
