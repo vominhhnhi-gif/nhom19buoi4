@@ -14,17 +14,17 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcrypt": "5.1.0",
+    "cloudinary": "^1.32.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.0",
     "mongoose": "^8.18.3",
-<<<<<<< HEAD
-<<<<<<< HEAD
     "mongose": "^0.0.2-security",
-=======
->>>>>>> Backend-Nhi
-=======
->>>>>>> 8a7b5a04666ad63b4afc0cb264ee7998af8250f3
+    "streamifier": "^0.1.1",
+    "multer": "^1.4.5-lts.1",
     "nodemon": "^3.1.10"
   }
 }
