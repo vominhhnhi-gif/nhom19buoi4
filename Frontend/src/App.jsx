@@ -1,92 +1,82 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import UserList from './components/UserList';
-import AddUser from './components/AddUser';
-import Login from './components/Login';
+import api, { setAuthFromLocalStorage, clearAuth, getAccessToken, setAccessToken, removeAccessToken } from './lib/api';
+import { useNavigate } from 'react-router-dom';
+// UserList and AddUser were removed from the root route in favor of the Profile page
+import AuthForm from './components/AuthForm';
 import Register from './components/Register';
 import Profile from './components/Profile';
 import AdminUserList from './components/AdminUserList';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
-import './App.css';
-import auth, { getUserFromToken } from './lib/auth';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import { Routes, Route } from 'react-router-dom';
 
 function App() {
-  const [users, setUsers] = useState([]);
+  const [token, setToken] = useState(getAccessToken() || null);
   const [currentUser, setCurrentUser] = useState(null);
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    const init = async () => {
+      // set api auth header if token in localStorage
+      setAuthFromLocalStorage();
+      if (!token) return;
+      try {
+        // fetch current user profile first
+        const res = await api.get('/profile');
+        setCurrentUser(res.data || null);
+        // Admin-specific user listing is handled in the admin route/component
+      } catch (err) {
+        // if token invalid or expired, clear auth and redirect to login
+  console.info('Profile fetch failed, clearing auth', err?.response?.status);
+  clearAuth();
+  setToken(null);
+  setCurrentUser(null);
+        // optionally redirect to login
+        // window.location.href = '/login';
+      }
+    };
+    init();
+  }, [token]);
+
+  const handleLogout = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/users');
-      setUsers(res.data);
+      await api.post('/auth/logout');
     } catch (err) {
-      console.error('Failed to fetch users', err);
+      // ignore
     }
+    clearAuth();
+    setToken(null);
+    navigate('/login');
   };
 
-  useEffect(() => {
-    fetchUsers();
-    // initialize current user from token
-    try {
-      const u = getUserFromToken();
-      setCurrentUser(u);
-    } catch (e) {}
-    const onAuthChanged = (e) => {
-      try {
-        const u = getUserFromToken();
-        setCurrentUser(u);
-      } catch (err) {}
-    };
-    window.addEventListener('auth:changed', onAuthChanged);
-    return () => window.removeEventListener('auth:changed', onAuthChanged);
-  }, []);
+  const navigate = useNavigate();
+
+  // centralize what happens after successful auth (login/register)
+  const handleAuth = (t) => {
+    if (!t) return;
+    setAccessToken(t);
+    setToken(t);
+    navigate('/');
+  };
 
   return (
-    <Router>
-      <div className="App container">
-        <header className="app-header">
-          <h1>User Manager</h1>
-          <nav>
-            <Link to="/">Trang chủ</Link> |{' '}
-            <Link to="/login">Đăng nhập</Link> |{' '}
-            <Link to="/register">Đăng ký</Link> |{' '}
-            <Link to="/profile">Profile</Link> |{' '}
-            <Link to="/admin">Admin</Link> |{' '}
-            <Link to="/forgot-password">Quên mật khẩu</Link> |{' '}
-            <Link to="/reset-password">Đổi mật khẩu</Link>
-          </nav>
-          <div style={{ marginTop: 8 }}>
-            {currentUser ? (
-              <div className="row">
-                <div style={{ marginRight: 12 }}>Xin chào, <strong>{currentUser.name || currentUser.email || 'User'}</strong></div>
-                <button className="btn-ghost" onClick={() => { auth.clearToken(); setCurrentUser(null); }}>Logout</button>
-              </div>
-            ) : null}
-          </div>
-        </header>
-        <main className="app-main">
+    <div className="min-h-screen bg-gray-50">
+      {token && <Navbar currentUser={currentUser} onLogout={handleLogout} />}
+
+      <main className={token ? 'app-main p-6' : 'flex items-center justify-center min-h-screen p-6'}>
+        <div className={token ? 'w-full' : 'w-full max-w-md'}>
           <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/login" element={<AuthForm onAuth={handleAuth} />} />
+            <Route path="/register" element={<Register onAuth={handleAuth} />} />
+            <Route path="/profile" element={token ? <Profile /> : <AuthForm onAuth={handleAuth} />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/admin" element={<AdminUserList />} />
-            <Route path="/" element={
-              <>
-                <section className="left">
-                  <AddUser onUserAdded={fetchUsers} />
-                </section>
-                <section className="right">
-                  <UserList users={users} onUsersChanged={fetchUsers} />
-                </section>
-              </>
-            } />
+            <Route path="/admin" element={token ? <AdminUserList /> : <AuthForm onAuth={handleAuth} />} />
+              <Route path="/" element={token ? <Profile /> : <AuthForm onAuth={handleAuth} />} />
           </Routes>
-        </main>
-      </div>
-    </Router>
+        </div>
+      </main>
+    </div>
   );
 }
 

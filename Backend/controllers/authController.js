@@ -31,7 +31,6 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        console.log('DEBUG login body:', { email: !!email, password: !!password });
         if (!email || !password) return res.status(400).json({ message: 'email and password required' });
 
         const user = await User.findOne({ email });
@@ -44,7 +43,8 @@ exports.login = async (req, res) => {
         res.cookie('token', token, { httpOnly: true });
         res.json({ message: 'Login successful', token });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        const msg = err?.response?.data?.message || 'Login failed';
+        alert(msg);
     }
 };
 
@@ -75,7 +75,7 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
     try {
         const { token, password } = req.body;
-if (!token || !password) return res.status(400).json({ message: 'token and new password required' });
+        if (!token || !password) return res.status(400).json({ message: 'token and new password required' });
 
         let payload;
         try {
