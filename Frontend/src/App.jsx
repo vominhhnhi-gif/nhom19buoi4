@@ -9,10 +9,12 @@ import AdminUserList from './components/AdminUserList';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import './App.css';
+import auth, { getUserFromToken } from './lib/auth';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 function App() {
   const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const fetchUsers = async () => {
     try {
@@ -25,6 +27,19 @@ function App() {
 
   useEffect(() => {
     fetchUsers();
+    // initialize current user from token
+    try {
+      const u = getUserFromToken();
+      setCurrentUser(u);
+    } catch (e) {}
+    const onAuthChanged = (e) => {
+      try {
+        const u = getUserFromToken();
+        setCurrentUser(u);
+      } catch (err) {}
+    };
+    window.addEventListener('auth:changed', onAuthChanged);
+    return () => window.removeEventListener('auth:changed', onAuthChanged);
   }, []);
 
   return (
@@ -41,6 +56,14 @@ function App() {
             <Link to="/forgot-password">Quên mật khẩu</Link> |{' '}
             <Link to="/reset-password">Đổi mật khẩu</Link>
           </nav>
+          <div style={{ marginTop: 8 }}>
+            {currentUser ? (
+              <div className="row">
+                <div style={{ marginRight: 12 }}>Xin chào, <strong>{currentUser.name || currentUser.email || 'User'}</strong></div>
+                <button className="btn-ghost" onClick={() => { auth.clearToken(); setCurrentUser(null); }}>Logout</button>
+              </div>
+            ) : null}
+          </div>
         </header>
         <main className="app-main">
           <Routes>
