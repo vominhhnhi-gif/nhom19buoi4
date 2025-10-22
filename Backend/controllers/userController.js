@@ -56,6 +56,29 @@ exports.updateUser = async (req, res) => {
     }
 };
 
+// PATCH /users/:id/role  -> chỉ admin
+exports.updateUserRole = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { role } = req.body;
+        const allowed = ['user','moderator','admin'];
+        if (!allowed.includes(role)) return res.status(400).json({ message: 'Invalid role' });
+
+        // Prevent admin from changing their own role to avoid accidental lockout
+        if (req.user && req.user.id === id) return res.status(400).json({ message: 'Cannot change your own role' });
+
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.role = role;
+        user.updatedAt = Date.now();
+        await user.save();
+        res.json({ message: 'Role updated', user: { id: user._id, email: user.email, role: user.role } });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // Xoá user (nếu cần)
 exports.deleteUser = async (req, res) => {
     try {
