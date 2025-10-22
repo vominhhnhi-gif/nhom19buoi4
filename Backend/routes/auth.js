@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../controllers/authController');
+const authController = require('../controllers/authControllers'); // đúng tên file
 
-router.post('/signup', auth.signup);
-router.post('/login', auth.login);
-router.post('/refresh', auth.refresh);
-router.post('/logout', auth.logout);
-router.post('/forgot-password', auth.forgotPassword);
-router.post('/reset-password', auth.resetPassword);
+router.post('/signup', authController.signup);
+router.post('/login', authController.login);
+router.post('/refresh', authController.refresh);
+router.post('/logout', authController.logout);
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
 
 module.exports = router;
