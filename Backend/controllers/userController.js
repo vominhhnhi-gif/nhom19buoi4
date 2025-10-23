@@ -2,6 +2,7 @@ const User = require('../models/User'); // Import model User
 const bcrypt = require('bcrypt');
 const cloudinary = require('../config/cloudinaryConfig');
 const streamifier = require('streamifier');
+const sharp = require('sharp');
 
 // Helper to remove sensitive fields
 function sanitize(user) {
@@ -164,13 +165,20 @@ exports.uploadAvatar = async (req, res) => {
 };
 
 // Upload avatar file (multer memory buffer) to Cloudinary
+// This resizes the image to 500x500 (cover) using Sharp before uploading.
 exports.uploadAvatarFile = async (req, res) => {
     try {
         if (!req.file || !req.file.buffer) return res.status(400).json({ message: 'No file uploaded' });
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const bufferStream = streamifier.createReadStream(req.file.buffer);
+        // Resize with Sharp to 500x500 and convert to JPEG
+        const resizedBuffer = await sharp(req.file.buffer)
+            .resize(500, 500, { fit: 'cover' })
+            .jpeg({ quality: 85 })
+            .toBuffer();
+
+        const bufferStream = streamifier.createReadStream(resizedBuffer);
 
         const uploadStream = cloudinary.uploader.upload_stream({ folder: 'avatars', resource_type: 'image' }, async (error, result) => {
             if (error) {
@@ -181,8 +189,11 @@ exports.uploadAvatarFile = async (req, res) => {
             const updated = await user.save();
             res.json(sanitize(updated));
         });
-bufferStream.pipe(uploadStream);
+
+        bufferStream.pipe(uploadStream);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+
+
