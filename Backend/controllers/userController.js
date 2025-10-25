@@ -21,6 +21,23 @@ exports.getUsers = async (req, res) => {
     }
 };
 
+// GET /users/:id (Lấy một user theo ID) - admin only
+exports.getUser = async (req, res) => {
+    try {
+        const requester = req.user;
+        if (!requester) return res.status(401).json({ message: 'Unauthorized' });
+
+        // Only admin can fetch arbitrary user details
+        if (requester.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(sanitize(user));
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // POST /users (Tạo user mới)
 exports.createUser = async (req, res) => {
     try {
@@ -42,64 +59,49 @@ exports.createUser = async (req, res) => {
 // Put /users/:id (Cập nhật user theo ID)
 exports.updateUser = async (req, res) => {
     try {
-        // Authorization: only admin or owner can update
         const requester = req.user; // set by auth middleware
-        console.log(`[USER] PUT /users/${req.params.id} by ${requester?.id} role=${requester?.role}`);
-        if (!requester) return res.status(401).json({ message: 'Unauthorized' });
-        if (requester.role !== 'admin' && requester.id !== req.params.id) {
-            return res.status(403).json({ message: 'Forbidden' });
-        }
+        const targetId = req.params.id;
+        console.log(`[USER] PUT /users/${targetId} by ${requester?.id} role=${requester?.role}`);
 
-        const user = await User.findById(req.params.id); // Tìm user theo ID
+        if (!requester) return res.status(401).json({ message: 'Unauthorized' });
+
+        const user = await User.findById(targetId);
         if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const isSelf = requester.id === targetId;
+
+        // Prevent non-admins from modifying admin accounts (unless it's themselves and they are admin)
+        if (user.role === 'admin' && requester.role !== 'admin' && !isSelf) {
+            return res.status(403).json({ message: 'Forbidden: cannot modify admin account' });
+        }
 
         // Validate and apply updates
         if (req.body.name !== undefined) {
             if (typeof req.body.name !== 'string' || req.body.name.trim().length < 2) return res.status(400).json({ message: 'Invalid name' });
             user.name = req.body.name.trim();
         }
+
         if (req.body.email !== undefined) {
-            // basic email check
             if (typeof req.body.email !== 'string' || !req.body.email.includes('@')) return res.status(400).json({ message: 'Invalid email' });
-            // avoid duplicate email
+            // Only admin can change another user's email
+            if (!isSelf && requester.role !== 'admin') return res.status(403).json({ message: "Forbidden: only admin can change another user's email" });
             const existing = await User.findOne({ email: req.body.email });
             if (existing && existing._id.toString() !== user._id.toString()) return res.status(400).json({ message: 'Email already in use' });
             user.email = req.body.email;
         }
+
         if (req.body.password !== undefined) {
             if (typeof req.body.password !== 'string' || req.body.password.length < 6) return res.status(400).json({ message: 'Password too short (min 6 chars)' });
+            // Only allow password change by self or admin
+            if (!isSelf && requester.role !== 'admin') return res.status(403).json({ message: 'Forbidden: cannot change password for another user' });
             user.password = await bcrypt.hash(req.body.password, 10);
         }
-    const requester = req.user; // { id, role }
 
-    if (!requester) return res.status(401).json({ message: 'Unauthorized' });
+        if (req.body.avatar !== undefined) {
+            if (typeof req.body.avatar !== 'string') return res.status(400).json({ message: 'Invalid avatar' });
+            user.avatar = req.body.avatar;
+        }
 
-    const isSelf = requester.id === req.params.id;
-
-    // Prevent moderators or users from modifying admin accounts
-    if (user.role === 'admin' && requester.role !== 'admin') {
-        return res.status(403).json({ message: 'Forbidden: cannot modify admin account' });
-    }
-
-    // Only admin can change role or email on other accounts.
-    if (req.body.role && requester.role !== 'admin') {
-        return res.status(403).json({ message: 'Forbidden: only admin can change roles' });
-    }
-
-    if (req.body.email && !isSelf && requester.role !== 'admin') {
-        return res.status(403).json({ message: "Forbidden: only admin can change another user's email" });
-    }
-
-    // Fields allowed for moderators and users (self): name, avatar, password (self only)
-    if (req.body.name) user.name = req.body.name;
-    if (req.body.avatar) user.avatar = req.body.avatar;
-    if (req.body.password) {
-        // Only allow password change by self or admin
-        if (!isSelf && requester.role !== 'admin') return res.status(403).json({ message: 'Forbidden: cannot change password for another user' });
-        user.password = await bcrypt.hash(req.body.password, 10);
-    }
-    if (req.body.email) user.email = req.body.email;
-    if (req.body.role) user.role = req.body.role;
         if (req.body.role !== undefined) {
             // only admin can change role
             if (requester.role !== 'admin') return res.status(403).json({ message: 'Forbidden: only admin can change role' });

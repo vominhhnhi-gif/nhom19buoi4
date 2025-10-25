@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { useLocation, Link } from 'react-router-dom';
 import { Key, Lock, Hash, ArrowLeft, CheckCircle } from 'lucide-react';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Card from './ui/Card';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
@@ -77,7 +80,7 @@ const ResetPassword = () => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+        <Card className="p-8">
           {!isSuccess ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Token Field */}
@@ -86,8 +89,7 @@ const ResetPassword = () => {
                   <Hash className="w-4 h-4" />
                   Token đặt lại
                 </label>
-                <input
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
+                <Input
                   type="text"
                   value={token}
                   onChange={e => setToken(e.target.value)}
@@ -102,8 +104,7 @@ const ResetPassword = () => {
                   <Lock className="w-4 h-4" />
                   Mật khẩu mới
                 </label>
-                <input
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
+                <Input
                   type="password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
@@ -118,8 +119,7 @@ const ResetPassword = () => {
                   <Lock className="w-4 h-4" />
                   Xác nhận mật khẩu
                 </label>
-                <input
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
+                <Input
                   type="password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
@@ -145,26 +145,13 @@ const ResetPassword = () => {
               )}
 
               {/* Submit Button */}
-              <button
-                className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                type="submit"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Đang đặt lại...
-                  </div>
+                  'Đang đặt lại...'
                 ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <Key className="w-5 h-5" />
-                    Đặt lại mật khẩu
-                  </div>
+                  <><Key className="w-5 h-5" /> Đặt lại mật khẩu</>
                 )}
-              </button>
+              </Button>
             </form>
           ) : (
             /* Success State */
@@ -177,15 +164,12 @@ const ResetPassword = () => {
                 <p className="text-gray-600">{message}</p>
               </div>
 
-              <Link
-                to="/login"
-                className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-              >
-                Quay lại đăng nhập
+              <Link to="/login">
+                <Button variant="secondary" className="px-6 py-3">Quay lại đăng nhập</Button>
               </Link>
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

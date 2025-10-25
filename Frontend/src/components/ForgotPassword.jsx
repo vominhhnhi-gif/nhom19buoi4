@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import api from '../lib/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Card from './ui/Card';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
@@ -56,7 +59,7 @@ const ForgotPassword = () => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+        <Card>
           {!isSuccess ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Field */}
@@ -65,14 +68,7 @@ const ForgotPassword = () => {
                   <Mail className="w-4 h-4" />
                   Email
                 </label>
-                <input
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-amber-500 focus:ring-4 focus:ring-amber-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Nhập email của bạn"
-                  required
-                />
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Nhập email của bạn" required />
               </div>
 
               {/* Error Message */}
@@ -92,26 +88,9 @@ const ForgotPassword = () => {
               )}
 
               {/* Submit Button */}
-              <button
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Đang gửi...
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <Mail className="w-5 h-5" />
-                    Gửi yêu cầu
-                  </div>
-                )}
-              </button>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Đang gửi...' : (<><Mail className="w-5 h-5" /> Gửi yêu cầu</>)}
+              </Button>
             </form>
           ) : (
             /* Success State */
@@ -125,17 +104,14 @@ const ForgotPassword = () => {
               </div>
 
               {resetToken && (
-                <button
-                  onClick={() => navigate(`/reset-password?token=${encodeURIComponent(resetToken)}`)}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2"
-                >
+                <Button onClick={() => navigate(`/reset-password?token=${encodeURIComponent(resetToken)}`)}>
                   Tiếp theo
                   <ArrowRight className="w-5 h-5" />
-                </button>
+                </Button>
               )}
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

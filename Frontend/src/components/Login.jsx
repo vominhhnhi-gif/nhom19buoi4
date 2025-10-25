@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import api, { setAccessToken } from '../lib/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Card from './ui/Card';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
@@ -43,7 +46,7 @@ const Login = ({ onAuth }) => {
       <div className="w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-lg mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-lg mb-4">
             <LogIn className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Chào mừng trở lại</h1>
@@ -51,7 +54,7 @@ const Login = ({ onAuth }) => {
         </div>
 
         {/* Login Card */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+        <Card>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div className="space-y-2">
@@ -60,14 +63,7 @@ const Login = ({ onAuth }) => {
                 Email
               </label>
               <div className="relative">
-                <input
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Nhập email của bạn"
-                  required
-                />
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Nhập email của bạn" required />
               </div>
             </div>
 
@@ -78,19 +74,8 @@ const Login = ({ onAuth }) => {
                 Mật khẩu
               </label>
               <div className="relative">
-                <input
-                  className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
+                <Input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Nhập mật khẩu" required className="pr-12" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
@@ -98,12 +83,7 @@ const Login = ({ onAuth }) => {
 
             {/* Forgot Password Link */}
             <div className="flex justify-end">
-              <Link
-                to="/forgot-password"
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
-              >
-                Quên mật khẩu?
-              </Link>
+              <Link to="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors">Quên mật khẩu?</Link>
             </div>
 
             {/* Error Message */}
@@ -122,42 +102,15 @@ const Login = ({ onAuth }) => {
               </div>
             )}
 
-            {/* Submit Button */}
-            <button
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang đăng nhập...
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <LogIn className="w-5 h-5" />
-                  Đăng nhập
-                </div>
-              )}
-            </button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Đang đăng nhập...' : (<><LogIn className="w-5 h-5" /> Đăng nhập</>)}
+            </Button>
           </form>
-
           {/* Register Link */}
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              Chưa có tài khoản?{' '}
-              <Link
-                to="/register"
-                className="text-indigo-600 hover:text-indigo-800 font-semibold transition-colors"
-              >
-                Đăng ký ngay
-              </Link>
-            </p>
+            <p className="text-gray-600">Chưa có tài khoản? <Link to="/register" className="text-indigo-600 hover:text-indigo-800 font-semibold transition-colors">Đăng ký ngay</Link></p>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

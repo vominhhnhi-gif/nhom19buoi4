@@ -1,5 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import api from '../lib/api';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import EmptyState from './ui/EmptyState';
+import Input from './ui/Input';
 import { useNavigate } from 'react-router-dom';
 import { setAuthFromLocalStorage, clearAuth } from '../lib/api';
 import {
@@ -19,7 +23,7 @@ import {
   Eye
 } from 'lucide-react';
 
-const AdminUserList = () => {
+const AdminUserList = ({ currentUser }) => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [error, setError] = useState('');
@@ -33,8 +37,8 @@ const AdminUserList = () => {
 
   const fetchUsers = async () => {
     try {
-  setAuthFromLocalStorage();
-  const res = await api.get('/users');
+      setAuthFromLocalStorage();
+      const res = await api.get('/users');
       setUsers(res.data || []);
       setFilteredUsers(res.data || []);
     } catch (err) {
@@ -42,21 +46,16 @@ const AdminUserList = () => {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
-
-  // check profile to ensure admin and show logout button only for admins
+  // Only fetch users when we know the current user is admin
   useEffect(() => {
-    const check = async () => {
-      try {
-  setAuthFromLocalStorage();
-  const res = await api.get('/profile');
-        setIsAdmin(res.data?.role === 'admin');
-      } catch (err) {
-        // ignore - profile may fail if not authenticated
-      }
-    };
-    check();
-  }, []);
+    if (currentUser?.role === 'admin' || currentUser?.role === 'moderator') {
+      // both admin and moderator can view the list; only admin can perform actions
+      fetchUsers();
+      setIsAdmin(currentUser?.role === 'admin');
+    } else {
+      setIsAdmin(false);
+    }
+  }, [currentUser]);
 
   // Filter users based on search term
   useEffect(() => {
@@ -169,115 +168,125 @@ const AdminUserList = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto">
 
-        {/* Controls */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Search */}
             <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm người dùng..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 transition-all duration-200"
-                />
-              </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3"><Users className="w-6 h-6 text-indigo-600" /> Quản lý người dùng</h1>
+            <p className="text-sm text-gray-600">Xem, tìm kiếm và quản lý người dùng trong hệ thống</p>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:flex-none max-w-md">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Tìm kiếm người dùng..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3"
+                aria-label="Tìm kiếm người dùng"
+              />
             </div>
 
-            {/* Bulk Actions */}
-            <div className="flex items-center gap-3">
-              {selectedUsers.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
-                    Đã chọn {selectedUsers.length} người dùng
-                  </span>
-                  <button
-                    onClick={handleBulkDelete}
-                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Xóa đã chọn
-                  </button>
-                </div>
+            <div className="flex items-center gap-2">
+              {isAdmin ? (
+                selectedUsers.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Đã chọn {selectedUsers.length}</span>
+                    <Button variant="danger" onClick={handleBulkDelete}><Trash2 className="w-4 h-4" /> Xóa</Button>
+                  </div>
+                ) : (
+                  <Button onClick={fetchUsers} className="hidden md:inline-flex">Làm mới</Button>
+                )
+              ) : (
+                <Button onClick={fetchUsers} className="hidden md:inline-flex">Làm mới</Button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8 rounded-r-xl">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+          <div className="mb-6">
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl" role="status" aria-live="polite">
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 text-red-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
+                <div>
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* DataGrid */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        {/* Responsive list for mobile */}
+        <div className="space-y-4 md:hidden">
+          {paginatedUsers.map((user) => (
+            <Card key={user._id || user.id} className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center">
+                    <User className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                    <div className="text-xs text-gray-500">{user.email}</div>
+                    <div className="text-xs text-gray-400">ID: {user._id || user.id}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <Button variant="ghost" onClick={() => handleDelete(user._id || user.id)} aria-label={`Delete ${user.name}`}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={paginatedUsers.length > 0 && selectedUsers.length === paginatedUsers.length}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    />
+                  {isAdmin && (
+                    <th className="px-4 py-3 text-left w-12">
+                      <input
+                        type="checkbox"
+                        checked={paginatedUsers.length > 0 && selectedUsers.length === paginatedUsers.length}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                    </th>
+                  )}
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('name')}>
+                    <div className="flex items-center gap-2"><User className="w-4 h-4" /> Tên {getSortIcon('name')}</div>
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('name')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      Tên
-                      {getSortIcon('name')}
-                    </div>
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('email')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Email
-                      {getSortIcon('email')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Vai trò
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ngày tạo
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Hành động
-                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('email')}>Email {getSortIcon('email')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Vai trò</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {paginatedUsers.map((user, index) => (
                   <tr key={user._id || user.id} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(user._id || user.id)}
-                        onChange={(e) => handleSelectUser(user._id || user.id, e.target.checked)}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                      {isAdmin && (
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.includes(user._id || user.id)}
+                            onChange={(e) => handleSelectUser(user._id || user.id, e.target.checked)}
+                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                        </td>
+                      )}
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center">
@@ -290,29 +299,25 @@ const AdminUserList = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin'
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-green-100 text-green-800'
-                        }`}>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
                         {user.role || 'user'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleDelete(user._id || user.id)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {isAdmin && (
+                          <>
+                            <Button variant="ghost" onClick={() => handleDelete(user._id || user.id)} aria-label={`Delete ${user.name}`} className="px-2 py-1 text-sm">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" onClick={() => navigate(`/users/${user._id || user.id}`)} aria-label={`View ${user.name}`} className="px-2 py-1 text-sm">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -321,74 +326,53 @@ const AdminUserList = () => {
             </table>
           </div>
 
-          {/* Empty State */}
           {paginatedUsers.length === 0 && !error && (
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">Không có người dùng nào</h3>
-              <p className="text-gray-500">
-                {searchTerm ? 'Không tìm thấy người dùng phù hợp với tìm kiếm của bạn.' : 'Chưa có người dùng nào trong hệ thống.'}
-              </p>
+            <div className="p-8">
+              <EmptyState
+                icon={<Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />}
+                title="Không có người dùng nào"
+                description={searchTerm ? 'Không tìm thấy người dùng phù hợp với tìm kiếm của bạn.' : 'Chưa có người dùng nào trong hệ thống.'}
+              />
             </div>
           )}
         </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 mt-8">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Hiển thị {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, sortedUsers.length)} của {sortedUsers.length} kết quả
-              </div>
+          <div className="bg-white rounded-2xl shadow-xl p-4 mt-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-700">Hiển thị {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, sortedUsers.length)} của {sortedUsers.length} kết quả</div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
+                <Button variant="ghost" onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="p-2">
                   <ChevronsLeft className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
+                </Button>
+                <Button variant="ghost" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1} className="p-2">
                   <ChevronLeft className="w-4 h-4" />
-                </button>
+                </Button>
 
                 <div className="flex items-center gap-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
                     if (page > totalPages) return null;
                     return (
-                      <button
+                      <Button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                          ? 'bg-indigo-600 text-white'
-                          : 'border border-gray-300 hover:bg-gray-50'
-                          }`}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === page ? 'bg-indigo-600 text-white' : 'border border-gray-300 hover:bg-gray-50'}`}
+                        variant={currentPage === page ? 'primary' : 'ghost'}
                       >
                         {page}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
 
-                <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
+                <Button variant="ghost" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages} className="p-2">
                   <ChevronRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
+                </Button>
+                <Button variant="ghost" onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="p-2">
                   <ChevronsRight className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
           </div>

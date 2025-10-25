@@ -3,6 +3,9 @@ import api, { setAccessToken } from '../lib/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import BackButton from './BackButton';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Card from './ui/Card';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
@@ -62,7 +65,7 @@ const Register = ({ onAuth }) => {
         </div>
 
         {/* Register Card */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+        <Card>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Field */}
             <div className="space-y-2">
@@ -71,14 +74,7 @@ const Register = ({ onAuth }) => {
                 Họ và tên
               </label>
               <div className="relative">
-                <input
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Nhập họ và tên"
-                  required
-                />
+                <Input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nhập họ và tên" required />
               </div>
             </div>
 
@@ -89,14 +85,7 @@ const Register = ({ onAuth }) => {
                 Email
               </label>
               <div className="relative">
-                <input
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Nhập email của bạn"
-                  required
-                />
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Nhập email của bạn" required />
               </div>
             </div>
 
@@ -107,19 +96,8 @@ const Register = ({ onAuth }) => {
                 Mật khẩu
               </label>
               <div className="relative">
-                <input
-                  className="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
+                <Input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Nhập mật khẩu" required className="pr-12" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
@@ -142,41 +120,16 @@ const Register = ({ onAuth }) => {
             )}
 
             {/* Submit Button */}
-            <button
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang đăng ký...
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <UserPlus className="w-5 h-5" />
-                  Đăng ký
-                </div>
-              )}
-            </button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Đang đăng ký...' : (<><UserPlus className="w-5 h-5" /> Đăng ký</>)}
+            </Button>
           </form>
 
           {/* Login Link */}
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              Đã có tài khoản?{' '}
-              <Link
-                to="/login"
-                className="text-green-600 hover:text-green-800 font-semibold transition-colors"
-              >
-                Đăng nhập
-              </Link>
-            </p>
+            <p className="text-gray-600">Đã có tài khoản? <Link to="/login" className="text-green-600 hover:text-green-800 font-semibold transition-colors">Đăng nhập</Link></p>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
