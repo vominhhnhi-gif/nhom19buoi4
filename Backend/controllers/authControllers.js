@@ -2,6 +2,8 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const RefreshToken = require('../models/RefreshToken');
+const { logNow } = require('../middleware/logActivity');
+const Log = require('../models/Log');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
 const JWT_EXPIRES_IN = '7d';
@@ -33,17 +35,32 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: 'email and password required' });
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
+    const userAgent = req.get ? req.get('User-Agent') : req.headers['user-agent'];
+
+    // Record an explicit login attempt entry
+    await Log.create({ email: String(email).toLowerCase(), ip, userAgent, action: 'login_attempt', success: false });
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!user) {
+      await logNow({ email, ip, action: 'login_failure', userAgent, success: false });
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
     const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!ok) {
+      await logNow({ userId: user._id, email, ip, action: 'login_failure', userAgent, success: false });
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
     const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_SECRET || 'dev_refresh_secret', { expiresIn: '7d' });
     await RefreshToken.create({ token: refreshToken, userId: user._id });
     res.cookie('token', token, { httpOnly: true });
+
+    // successful login log
+    await logNow({ userId: user._id, email, ip, userAgent, action: 'login_success', success: true });
+
     res.json({ message: 'Login successful', token, refresh_token: refreshToken });
   } catch (err) {
     res.status(500).json({ message: err.message });

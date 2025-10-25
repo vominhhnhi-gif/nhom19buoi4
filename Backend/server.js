@@ -33,6 +33,10 @@ app.use('/auth', authRouter);
 const profileRouter = require('./routes/profile');
 app.use('/profile', profileRouter);
 
+// admin routes (logs, etc.)
+const adminRouter = require('./routes/admin');
+app.use('/admin', adminRouter);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
