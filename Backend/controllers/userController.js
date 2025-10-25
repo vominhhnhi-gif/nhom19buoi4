@@ -31,14 +31,14 @@ exports.createUser = async (req, res) => {
         if (existing) return res.status(400).json({ message: 'Email already in use' });
 
         const hash = await bcrypt.hash(password, 10);
-        const user = new User({ name, email, password: hash, role: role || 'user' });
+        // For public signup, always assign 'user' role to prevent privilege escalation.
+        const user = new User({ name, email, password: hash, role: 'user' });
         const newUser = await user.save();
         res.status(201).json(sanitize(newUser));
-        } catch (err) {
+    } catch (err) {
         res.status(400).json({ message: err.message });
     }
-};
-
+}
 // Put /users/:id (Cập nhật user theo ID)
 exports.updateUser = async (req, res) => {
     try {
@@ -70,6 +70,36 @@ exports.updateUser = async (req, res) => {
             if (typeof req.body.password !== 'string' || req.body.password.length < 6) return res.status(400).json({ message: 'Password too short (min 6 chars)' });
             user.password = await bcrypt.hash(req.body.password, 10);
         }
+    const requester = req.user; // { id, role }
+
+    if (!requester) return res.status(401).json({ message: 'Unauthorized' });
+
+    const isSelf = requester.id === req.params.id;
+
+    // Prevent moderators or users from modifying admin accounts
+    if (user.role === 'admin' && requester.role !== 'admin') {
+        return res.status(403).json({ message: 'Forbidden: cannot modify admin account' });
+    }
+
+    // Only admin can change role or email on other accounts.
+    if (req.body.role && requester.role !== 'admin') {
+        return res.status(403).json({ message: 'Forbidden: only admin can change roles' });
+    }
+
+    if (req.body.email && !isSelf && requester.role !== 'admin') {
+        return res.status(403).json({ message: "Forbidden: only admin can change another user's email" });
+    }
+
+    // Fields allowed for moderators and users (self): name, avatar, password (self only)
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.avatar) user.avatar = req.body.avatar;
+    if (req.body.password) {
+        // Only allow password change by self or admin
+        if (!isSelf && requester.role !== 'admin') return res.status(403).json({ message: 'Forbidden: cannot change password for another user' });
+        user.password = await bcrypt.hash(req.body.password, 10);
+    }
+    if (req.body.email) user.email = req.body.email;
+    if (req.body.role) user.role = req.body.role;
         if (req.body.role !== undefined) {
             // only admin can change role
             if (requester.role !== 'admin') return res.status(403).json({ message: 'Forbidden: only admin can change role' });
@@ -108,7 +138,7 @@ exports.deleteUser = async (req, res) => {
 // These assume an auth middleware sets req.user = { id, role }
 exports.getProfile = async (req, res) => {
     try {
-const user = await User.findById(req.user.id);
+        const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
         res.json(sanitize(user));
     } catch (err) {
@@ -121,11 +151,20 @@ exports.updateProfile = async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const { name, avatar, password } = req.body;
+        const { name, avatar, password, email } = req.body;
         // basic validations
         if (name !== undefined) {
             if (typeof name !== 'string' || name.trim().length < 2) return res.status(400).json({ message: 'Invalid name' });
             user.name = name.trim();
+        }
+        if (email !== undefined) {
+            if (typeof email !== 'string' || !email.includes('@')) return res.status(400).json({ message: 'Invalid email' });
+            // if email changed, ensure not used by another user
+            if (email !== user.email) {
+                const existing = await User.findOne({ email });
+                if (existing) return res.status(400).json({ message: 'Email already in use' });
+                user.email = email;
+            }
         }
         if (avatar !== undefined) {
             if (typeof avatar !== 'string') return res.status(400).json({ message: 'Invalid avatar' });
@@ -195,5 +234,3 @@ exports.uploadAvatarFile = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
-

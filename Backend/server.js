@@ -15,9 +15,10 @@ mongoose.connect(process.env.MONGODB_URI, {
 	.then(() => console.log('Kết nối MongoDB thành công!'))
 	.catch((err) => console.error('Kết nối MongoDB thất bại:', err));
 
-// Thêm CORS middleware
+// Thêm CORS middleware - cho phép credentials từ frontend cụ thể
 const cors = require('cors');
-app.use(cors({ origin: '*' }));
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 
 
 // users routes
