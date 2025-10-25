@@ -15,6 +15,7 @@ const Profile = () => {
   const [password, setPassword] = useState('');
   const [avatar, setAvatar] = useState('');
   const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
   const [userId, setUserId] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -39,6 +40,15 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
+  // cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+      } catch (e) {}
+    };
+  }, [previewUrl]);
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     setError('');
@@ -62,7 +72,17 @@ const Profile = () => {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const f = e.target.files[0];
+    if (!f) return;
+    // create temporary preview URL
+    try {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    } catch (e) {}
+    const url = URL.createObjectURL(f);
+    setPreviewUrl(url);
+    setFile(f);
   };
 
   const handleUploadFile = async () => {
@@ -74,7 +94,11 @@ const Profile = () => {
       form.append('avatar', file);
   setAuthFromLocalStorage();
   const res = await api.post(`/profile/upload-avatar`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setAvatar(res.data.avatar || res.data.avatarUrl || '');
+      const uploaded = res.data.avatar || res.data.avatarUrl || '';
+      setAvatar(uploaded);
+      // clear preview (we now use server url)
+      try { if (previewUrl) { URL.revokeObjectURL(previewUrl); } } catch (e) {}
+      setPreviewUrl('');
       setMessage('Upload avatar thành công');
       setFile(null);
     } catch (err) {
@@ -154,7 +178,9 @@ const Profile = () => {
               <div className="flex justify-center mb-6">
                 <div className="relative">
                     <div className="w-48 h-48 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl overflow-hidden shadow-xl">
-                      {avatar ? (
+                      {previewUrl ? (
+                        <img src={previewUrl} alt="preview" className="w-full h-full object-cover" />
+                      ) : avatar ? (
                         <img src={avatar} alt={name ? `${name} avatar` : 'avatar'} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
