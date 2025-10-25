@@ -36,7 +36,6 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        console.log('DEBUG login body:', { email: !!email, password: !!password });
         if (!email || !password) return res.status(400).json({ message: 'email and password required' });
 
         const user = await User.findOne({ email });
@@ -51,7 +50,8 @@ exports.login = async (req, res) => {
     res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'lax' });
     res.json({ message: 'Login successful', accessToken });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        const msg = err?.response?.data?.message || 'Login failed';
+        alert(msg);
     }
 };
 
@@ -109,7 +109,7 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
     try {
         const { token, password } = req.body;
-if (!token || !password) return res.status(400).json({ message: 'token and new password required' });
+        if (!token || !password) return res.status(400).json({ message: 'token and new password required' });
 
         let payload;
         try {
@@ -127,6 +127,35 @@ if (!token || !password) return res.status(400).json({ message: 'token and new p
         await user.save();
 
         res.json({ message: 'Password reset successful' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// POST /auth/refresh
+exports.refresh = async (req, res) => {
+    try {
+        // Accept token either from cookie or Authorization header
+        let token = null;
+        if (req.cookies && req.cookies.token) token = req.cookies.token;
+        if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+        if (!token) return res.status(401).json({ message: 'No token provided' });
+
+        // Verify existing token (if expired, jwt.verify will throw)
+        let payload;
+        try {
+            payload = jwt.verify(token, JWT_SECRET);
+        } catch (err) {
+            return res.status(401).json({ message: 'Invalid or expired token' });
+        }
+
+        // Issue a new token (same id/role)
+        const newToken = jwt.sign({ id: payload.id, role: payload.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        // set cookie for cookie-based clients
+        try { res.cookie('token', newToken, { httpOnly: true }); } catch (e) {}
+        res.json({ token: newToken });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

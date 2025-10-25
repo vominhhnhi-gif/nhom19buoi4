@@ -9,3 +9,4 @@ const RefreshSchema = new Schema({
 });
 
 module.exports = mongoose.model('RefreshToken', RefreshSchema);
+

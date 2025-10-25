@@ -15,5 +15,4 @@ const requireRole = (...allowedRoles) => {
   };
 };
 
-// Export both names: requireRole (existing) and checkRole (more descriptive API)
 module.exports = { requireRole, checkRole: requireRole };
