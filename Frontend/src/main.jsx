@@ -3,6 +3,8 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import { setAuthFromLocalStorage } from './lib/api'
+import { Provider } from 'react-redux'
+import store from './store/store'
 
 // initialize axios auth header from saved token (if any)
 setAuthFromLocalStorage();
@@ -20,8 +22,10 @@ if (typeof window !== 'undefined') {
 
 createRoot(document.getElementById('root')).render(
   <>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <Provider store={store}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </Provider>
   </>,
 )
