@@ -4,6 +4,10 @@ const jwt = require('jsonwebtoken');
 const RefreshToken = require('../models/RefreshToken');
 const { logNow } = require('../middleware/logActivity');
 const Log = require('../models/Log');
+// Use the shared mailer module (config/mailer.js). It will provide a transporter
+// that either sends through SMTP (when env vars are set) or falls back to a
+// console-logger in development.
+const mailer = require('../config/mailer');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
 const JWT_EXPIRES_IN = '7d';
@@ -82,18 +86,52 @@ exports.forgotPassword = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'Email not found' });
 
     const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: RESET_EXPIRES_IN });
-    // TODO: send resetToken via email to user.email (use nodemailer or external service)
-    // For demo/testing we return the token in the response. In production, do NOT return token in body.
-    res.json({ message: 'Reset token generated (demo)', resetToken });
+
+    // Build reset URL for frontend
+    const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+    const resetUrl = `${FRONTEND_ORIGIN.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(resetToken)}`;
+
+    // Send email using the shared mailer (mailer may be a real SMTP transporter or
+    // a dev fallback that logs the email). Use SMTP_FROM or the configured user
+    // as the From address.
+    try {
+      const mailOptions = {
+        from: process.env.SMTP_FROM || process.env.GMAIL_USER || process.env.SMTP_USER,
+        to: user.email,
+        subject: 'Đặt lại mật khẩu - Group14',
+        text: `Bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản này. Mở liên kết sau để đặt lại mật khẩu: ${resetUrl}\n\nNếu bạn không yêu cầu, hãy bỏ qua email này.`,
+        html: `<p>Bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản này.</p>
+               <p>Nhấn vào liên kết dưới đây để đặt lại mật khẩu (hết hạn trong 1 giờ):</p>
+               <p><a href="${resetUrl}">${resetUrl}</a></p>
+               <p>Nếu bạn không yêu cầu, bạn có thể bỏ qua email này.</p>`,
+      };
+
+      await mailer.sendMail(mailOptions);
+      // Log the password reset request
+      await logNow({ userId: user._id, email: user.email, action: 'password_reset_requested', ip: req.ip, userAgent: req.get ? req.get('User-Agent') : req.headers['user-agent'], success: true });
+      return res.json({ message: 'Reset email sent if the address exists.' });
+    } catch (err) {
+      console.error('[authControllers] sendMail error:', err && err.message ? err.message : err);
+      // fallback: do not expose token; inform user that email failed
+      return res.status(500).json({ message: 'Failed to send reset email' });
+    }
+
+    // If transporter not configured, do not return the token in production. For dev we return token to allow testing.
+    if (process.env.NODE_ENV === 'development') {
+      return res.json({ message: 'Reset token generated (dev)', resetToken, resetUrl });
+    }
+
+    res.json({ message: 'If the email exists, a reset link has been sent.' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Reset password with token
+// Reset password with token (accept token in URL param or body)
 exports.resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const token = req.params?.token || req.body?.token;
+    const { password } = req.body;
     if (!token || !password) return res.status(400).json({ message: 'token and new password required' });
 
     let payload;

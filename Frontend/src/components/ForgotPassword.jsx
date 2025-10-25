@@ -12,6 +12,8 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [resetToken, setResetToken] = useState('');
+  const [resetUrl, setResetUrl] = useState('');
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -24,10 +26,20 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
   const res = await api.post('/auth/forgot-password', { email });
-  setMessage(res.data.resetToken ? `Reset token (demo): ${res.data.resetToken}` : res.data.message || 'Yêu cầu đã được gửi');
+  // If backend returns a demo reset token or resetUrl (development), surface it so testers
+  // can continue without email. In production the server only returns a generic message.
+  const token = res.data?.resetToken || '';
+  const url = res.data?.resetUrl || '';
+  if (token) {
+    setMessage(`Reset token (demo): ${token}`);
+    setResetToken(token);
+  } else if (url) {
+    setMessage('Reset link (demo) generated');
+    setResetUrl(url);
+  } else {
+    setMessage(res.data.message || 'Yêu cầu đã được gửi');
+  }
       setIsSuccess(true);
-      // if we have a resetToken, store it to local state so the UI can show "Tiếp theo"
-      if (res.data.resetToken) setResetToken(res.data.resetToken);
     } catch (err) {
       setError(err.response?.data?.message || 'Gửi yêu cầu thất bại');
     } finally {
@@ -36,7 +48,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center p-4">
+    <div className="max-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-blue-200 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Back Button */}
         <div className="mb-6">
@@ -51,7 +63,7 @@ const ForgotPassword = () => {
 
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl shadow-lg mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-3">
             <Mail className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Quên mật khẩu</h1>
@@ -102,6 +114,20 @@ const ForgotPassword = () => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Yêu cầu đã được gửi!</h3>
                 <p className="text-gray-600">{message}</p>
               </div>
+
+              {/* If the server returned a demo resetUrl, show a clickable link and copy button. */}
+              {resetUrl && (
+                <div className="flex flex-col gap-3 items-center">
+                  <a href={resetUrl} target="_blank" rel="noreferrer" className="text-indigo-600 underline break-all">Mở liên kết reset</a>
+                    <div className="flex gap-2 items-center">
+                      <div className={"copy-feedback" + (copied ? ' show' : '')}>
+                        <div className="msg">Đã sao chép</div>
+                        <Button onClick={async () => { await navigator.clipboard.writeText(resetUrl); setCopied(true); setTimeout(() => setCopied(false), 1800); }} className="px-3">Sao chép liên kết</Button>
+                      </div>
+                      <Button variant="secondary" onClick={() => navigate(`/reset-password?token=${encodeURIComponent(new URL(resetUrl).searchParams.get('token'))}`)}>Tiếp theo</Button>
+                    </div>
+                </div>
+              )}
 
               {resetToken && (
                 <Button onClick={() => navigate(`/reset-password?token=${encodeURIComponent(resetToken)}`)}>

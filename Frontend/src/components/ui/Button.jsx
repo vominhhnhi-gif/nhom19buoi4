@@ -13,7 +13,8 @@ const Button = ({ children, className, variant = 'primary', ...props }) => {
     <button
       {...props}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold shadow-md transition-all duration-150',
+        // consistent sizing and subtle press interaction
+        'inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2 rounded-2xl font-semibold shadow-md transition-transform duration-150 active:scale-[0.99] focus:outline-none focus:ring-4',
         VARIANT_CLASSES[variant] || VARIANT_CLASSES.primary,
         className
       )}
