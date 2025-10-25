@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Home, User, Shield, LogOut, Menu, X, UserCircle, ShieldUser } from 'lucide-react';
+import Button from './ui/Button';
 
 const Navbar = ({ currentUser, onLogout }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -13,41 +14,41 @@ const Navbar = ({ currentUser, onLogout }) => {
         setIsMobileMenuOpen(false);
     };
 
+    // Debug: log role in dev so we can confirm what value arrives here
+    if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.debug('Navbar currentUser:', currentUser);
+    }
+    const role = String(currentUser?.role || '').trim().toLowerCase();
+    const canAccessAdmin = role === 'admin' || role === 'moderator';
+
     return (
-        <nav className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20 sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+
+        <nav className="bg-gradient-to-r from-indigo-50 to-white/60 backdrop-blur-lg shadow sticky top-0 z-50 border-b border-white/10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link to="/" className="flex items-center gap-3" onClick={closeMobileMenu}>
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
                                 <ShieldUser className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-xl font-bold text-gray-900">Group14 App</span>
+                            <span className="text-lg md:text-xl font-semibold text-gray-900">Group14</span>
                         </Link>
                     </div>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-8">
-                        <Link
-                            to="/"
-                            className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all duration-200 font-medium"
-                        >
+                    <div className="hidden md:flex items-center space-x-6">
+                        <Link to="/" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-lg transition-colors font-medium flex items-center gap-2">
                             <Home className="w-4 h-4" />
                             Trang chủ
                         </Link>
-                        <Link
-                            to="/profile"
-                            className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all duration-200 font-medium"
-                        >
+                        <Link to="/profile" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-lg transition-colors font-medium flex items-center gap-2">
                             <User className="w-4 h-4" />
                             Hồ sơ
                         </Link>
-                        {currentUser?.role === 'admin' && (
-                            <Link
-                                to="/admin"
-                                className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-all duration-200 font-medium"
-                            >
+                    {canAccessAdmin && (
+                            <Link to="/admin" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-lg transition-colors font-medium flex items-center gap-2">
                                 <Shield className="w-4 h-4" />
                                 Quản trị
                             </Link>
@@ -58,17 +59,13 @@ const Navbar = ({ currentUser, onLogout }) => {
                     <div className="hidden md:flex items-center space-x-4">
                         {currentUser && (
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl">
-                                    <UserCircle className="w-5 h-5 text-gray-600" />
-                                    <span className="text-sm font-medium text-gray-700">Xin chào, {currentUser.name}</span>
+                                <div className="flex items-center gap-3 px-3 py-2 bg-white/60 rounded-full border border-white/10 shadow-sm">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center">
+                                        <UserCircle className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="text-sm text-gray-800">{currentUser.name}</div>
                                 </div>
-                                <button
-                                    onClick={onLogout}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    Đăng xuất
-                                </button>
+                                <Button variant="ghost" onClick={onLogout} className="px-3 py-2">Đăng xuất</Button>
                             </div>
                         )}
                     </div>
@@ -87,7 +84,7 @@ const Navbar = ({ currentUser, onLogout }) => {
                 {/* Mobile Navigation */}
                 {isMobileMenuOpen && (
                     <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-lg">
-                        <div className="px-2 pt-2 pb-3 space-y-1">
+                            <div className="px-2 pt-2 pb-3 space-y-1">
                             <Link
                                 to="/"
                                 className="flex items-center gap-3 px-3 py-3 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200 font-medium"
@@ -104,7 +101,7 @@ const Navbar = ({ currentUser, onLogout }) => {
                                 <User className="w-5 h-5" />
                                 Hồ sơ
                             </Link>
-                            {currentUser?.role === 'admin' && (
+                        {canAccessAdmin && (
                                 <Link
                                     to="/admin"
                                     className="flex items-center gap-3 px-3 py-3 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200 font-medium"
@@ -117,8 +114,10 @@ const Navbar = ({ currentUser, onLogout }) => {
                             {currentUser && (
                                 <div className="border-t border-gray-200 pt-3 mt-3">
                                     <div className="flex items-center gap-3 px-3 py-2 mb-3">
-                                        <UserCircle className="w-5 h-5 text-gray-600" />
-                                        <span className="text-sm font-medium text-gray-700">Xin chào, {currentUser.name}</span>
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center">
+                                            <UserCircle className="w-5 h-5 text-white" />
+                                        </div>
+                                        <div className="text-sm font-medium text-gray-700">{currentUser.name}</div>
                                     </div>
                                     <button
                                         onClick={() => {

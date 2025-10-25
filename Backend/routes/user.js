@@ -8,8 +8,10 @@ const multer = require('multer');
 // Multer memory storage for small images
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-// Admin-only: list users
-router.get('/', auth, requireRole('admin'), controller.getUsers);
+// Admin or Moderator: list users (moderator is read-only in UI)
+router.get('/', auth, requireRole('admin', 'moderator'), controller.getUsers);
+// Admin-only: get single user by id
+router.get('/:id', auth, requireRole('admin'), controller.getUser);
 // Public: create user (signup)
 router.post('/', controller.createUser);
 // Admin-only: update any user

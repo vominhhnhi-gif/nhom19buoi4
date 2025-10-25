@@ -21,6 +21,23 @@ exports.getUsers = async (req, res) => {
     }
 };
 
+// GET /users/:id (Lấy một user theo ID) - admin only
+exports.getUser = async (req, res) => {
+    try {
+        const requester = req.user;
+        if (!requester) return res.status(401).json({ message: 'Unauthorized' });
+
+        // Only admin can fetch arbitrary user details
+        if (requester.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(sanitize(user));
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // POST /users (Tạo user mới)
 exports.createUser = async (req, res) => {
     try {

@@ -3,6 +3,9 @@ import api, { setAuthFromLocalStorage, clearAuth } from '../lib/api';
 import { LogOut, Trash2, UploadCloud, User, Mail, Lock, Camera, Link as LinkIcon, Save, ArrowLeft } from 'lucide-react';
 import DemoRefresh from './DemoRefresh';
 import { Link } from 'react-router-dom';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Card from './ui/Card';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
@@ -145,76 +148,48 @@ const Profile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Avatar Section */}
           <div className="lg:col-span-1">
-            <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+            <Card>
               <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Ảnh đại diện</h2>
 
               <div className="flex justify-center mb-6">
                 <div className="relative">
-                  <div className="w-48 h-48 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl overflow-hidden shadow-xl">
-                    {avatar ? (
-                      <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <User className="w-24 h-24 text-white/80" />
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => document.getElementById('avatar-input').click()}
-                    className="absolute bottom-2 right-2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-                  >
-                    <Camera className="w-6 h-6 text-gray-600" />
-                  </button>
+                    <div className="w-48 h-48 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl overflow-hidden shadow-xl">
+                      {avatar ? (
+                        <img src={avatar} alt={name ? `${name} avatar` : 'avatar'} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="w-24 h-24 text-white/80" />
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => document.getElementById('avatar-input').click()}
+                      aria-label="Upload avatar"
+                      className="absolute bottom-2 right-2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors p-0"
+                    >
+                      <Camera className="w-6 h-6 text-gray-600" />
+                    </Button>
                 </div>
               </div>
 
-              <input
-                id="avatar-input"
-                className="hidden"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
+              <input id="avatar-input" className="hidden" type="file" accept="image/*" onChange={handleFileChange} aria-label="Choose avatar file" tabIndex="-1" />
 
               <div className="space-y-3">
-                <button
-                  onClick={handleUploadFile}
-                  disabled={!file || isUploading}
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:transform-none disabled:opacity-50"
-                >
-                  {isUploading ? (
-                    <div className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Đang upload...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2">
-                      <UploadCloud className="w-5 h-5" />
-                      Upload file
-                    </div>
-                  )}
-                </button>
+                <Button onClick={handleUploadFile} disabled={!file || isUploading} className="w-full">
+                  {isUploading ? 'Đang upload...' : (<><UploadCloud className="w-5 h-5" /> Upload file</>)}
+                </Button>
 
-                <button
-                  onClick={handleUploadUrl}
-                  disabled={isUploading}
-                  className="w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <LinkIcon className="w-5 h-5" />
-                    Upload từ URL
-                  </div>
-                </button>
+                <Button variant="secondary" onClick={handleUploadUrl} disabled={isUploading} className="w-full">
+                  <LinkIcon className="w-5 h-5" /> Upload từ URL
+                </Button>
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Profile Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
+            <Card>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Thông tin cá nhân</h2>
 
               <form onSubmit={handleUpdate} className="space-y-6">
@@ -224,14 +199,7 @@ const Profile = () => {
                       <User className="w-4 h-4" />
                       Họ và tên
                     </label>
-                    <input
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                      type="text"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      placeholder="Nhập họ và tên"
-                      required
-                    />
+                    <Input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Nhập họ và tên" required />
                   </div>
 
                   <div className="space-y-2">
@@ -239,14 +207,7 @@ const Profile = () => {
                       <Mail className="w-4 h-4" />
                       Email
                     </label>
-                    <input
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="Nhập email"
-                      required
-                    />
+                    <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Nhập email" required />
                   </div>
                 </div>
 
@@ -255,18 +216,12 @@ const Profile = () => {
                     <Lock className="w-4 h-4" />
                     Mật khẩu mới (để trống nếu không đổi)
                   </label>
-                  <input
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-200 text-gray-900 placeholder-gray-400"
-                    type="password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu mới"
-                  />
+                  <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Nhập mật khẩu mới" />
                 </div>
 
                 {/* Error Message */}
                 {error && (
-                  <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl">
+                  <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl" role="status" aria-live="polite">
                     <div className="flex">
                       <div className="flex-shrink-0">
                         <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -282,7 +237,7 @@ const Profile = () => {
 
                 {/* Success Message */}
                 {message && (
-                  <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
+                  <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl" role="status" aria-live="polite">
                     <div className="flex">
                       <div className="flex-shrink-0">
                         <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -296,56 +251,27 @@ const Profile = () => {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:transform-none disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Đang cập nhật...
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center gap-2">
-                      <Save className="w-5 h-5" />
-                      Cập nhật thông tin
-                    </div>
-                  )}
-                </button>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Đang cập nhật...' : (<><Save className="w-5 h-5" /> Cập nhật thông tin</>)}
+                </Button>
               </form>
 
               {/* Action Buttons */}
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button
-                    onClick={handleLogout}
-                    className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <LogOut className="w-5 h-5" />
-                      Đăng xuất
-                    </div>
-                  </button>
+                  <Button variant="secondary" onClick={handleLogout} className="flex-1">
+                    <div className="flex items-center justify-center gap-2"><LogOut className="w-5 h-5" /> Đăng xuất</div>
+                  </Button>
 
-                  <button
-                    onClick={handleDeleteAccount}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Trash2 className="w-5 h-5" />
-                      Xóa tài khoản
-                    </div>
-                  </button>
+                  <Button variant="danger" onClick={handleDeleteAccount} className="flex-1">
+                    <div className="flex items-center justify-center gap-2"><Trash2 className="w-5 h-5" /> Xóa tài khoản</div>
+                  </Button>
                 </div>
                 <div className="mt-6">
                   <DemoRefresh />
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       </div>

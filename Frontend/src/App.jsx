@@ -6,6 +6,8 @@ import AuthForm from './components/AuthForm';
 import Register from './components/Register';
 import Profile from './components/Profile';
 import AdminUserList from './components/AdminUserList';
+import UserDetail from './components/UserDetail';
+import RequireRole from './components/RequireRole';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import Navbar from './components/Navbar';
@@ -61,7 +63,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {token && <Navbar currentUser={currentUser} onLogout={handleLogout} />}
+      {/* Show Navbar only after we have a valid token AND the current user profile is loaded */}
+      {token && currentUser && <Navbar currentUser={currentUser} onLogout={handleLogout} />}
 
       <main className={token ? 'app-main p-6' : 'flex items-center justify-center min-h-screen p-6'}>
         <div className={token ? 'w-full' : 'w-full max-w-md'}>
@@ -71,7 +74,19 @@ function App() {
             <Route path="/profile" element={token ? <Profile /> : <AuthForm onAuth={handleAuth} />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/admin" element={token ? <AdminUserList /> : <AuthForm onAuth={handleAuth} />} />
+            <Route
+              path="/admin"
+              element={
+                token ? (
+                  <RequireRole allowedRoles={[ 'admin', 'moderator' ]} currentUser={currentUser}>
+                    <AdminUserList currentUser={currentUser} />
+                  </RequireRole>
+                ) : (
+                  <AuthForm onAuth={handleAuth} />
+                )
+              }
+            />
+            <Route path="/users/:id" element={token ? <RequireRole allowedRoles={[ 'admin' ]} currentUser={currentUser}><UserDetail /></RequireRole> : <AuthForm onAuth={handleAuth} />} />
               <Route path="/" element={token ? <Profile /> : <AuthForm onAuth={handleAuth} />} />
           </Routes>
         </div>
