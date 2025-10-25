@@ -1,9 +1,12 @@
 const User = require('../models/User');
+const RefreshToken = require('../models/RefreshToken');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
-const JWT_EXPIRES_IN = '7d';
+const REFRESH_SECRET = process.env.REFRESH_SECRET || 'dev_refresh_secret';
+const ACCESS_EXPIRES_IN = process.env.ACCESS_EXPIRES_IN || '15m';
+const REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '7d';
 const RESET_EXPIRES_IN = '1h';
 
 exports.signup = async (req, res) => {
@@ -20,9 +23,11 @@ exports.signup = async (req, res) => {
         const user = new User({ name, email, password: hash });
         await user.save();
 
-        const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        res.cookie('token', token, { httpOnly: true });
-        res.status(201).json({ message: 'User created', token });
+    const accessToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
+    const refreshToken = jwt.sign({ id: user._id }, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+    await RefreshToken.create({ token: refreshToken, userId: user._id });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'lax' });
+    res.status(201).json({ message: 'User created', accessToken });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -39,18 +44,47 @@ exports.login = async (req, res) => {
         const ok = await bcrypt.compare(password, user.password);
         if (!ok) return res.status(400).json({ message: 'Invalid credentials' });
 
-        const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        res.cookie('token', token, { httpOnly: true });
-        res.json({ message: 'Login successful', token });
+    const accessToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
+    const refreshToken = jwt.sign({ id: user._id }, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+    await RefreshToken.create({ token: refreshToken, userId: user._id });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'lax' });
+    res.json({ message: 'Login successful', accessToken });
     } catch (err) {
         const msg = err?.response?.data?.message || 'Login failed';
         alert(msg);
     }
 };
 
-exports.logout = (req, res) => {
-    res.clearCookie('token');
-    res.json({ message: 'Logged out' });
+exports.logout = async (req, res) => {
+    try {
+        const token = (req.cookies && req.cookies.refreshToken) || req.body.refreshToken;
+        if (token) await RefreshToken.findOneAndUpdate({ token }, { revoked: true });
+        res.clearCookie('refreshToken');
+        res.json({ message: 'Logged out' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.refresh = async (req, res) => {
+    try {
+        const token = (req.cookies && req.cookies.refreshToken) || req.body.refreshToken;
+        if (!token) return res.status(401).json({ message: 'No refresh token provided' });
+        let payload;
+        try { payload = jwt.verify(token, REFRESH_SECRET); } catch (e) { return res.status(401).json({ message: 'Invalid or expired refresh token' }); }
+        const stored = await RefreshToken.findOne({ token });
+        if (!stored || stored.revoked) return res.status(403).json({ message: 'Refresh token revoked or not found' });
+        const user = await User.findById(payload.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        stored.revoked = true; await stored.save();
+        const newRefresh = jwt.sign({ id: user._id }, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+        await RefreshToken.create({ token: newRefresh, userId: user._id });
+        const accessToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
+        res.cookie('refreshToken', newRefresh, { httpOnly: true, sameSite: 'lax' });
+        res.json({ accessToken });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 };
 
 // Demo: generate reset token and (in production) send by email

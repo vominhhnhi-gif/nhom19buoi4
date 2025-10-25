@@ -2,6 +2,7 @@ const User = require('../models/User'); // Import model User
 const bcrypt = require('bcrypt');
 const cloudinary = require('../config/cloudinaryConfig');
 const streamifier = require('streamifier');
+const sharp = require('sharp');
 
 // Helper to remove sensitive fields
 function sanitize(user) {
@@ -41,9 +42,33 @@ exports.createUser = async (req, res) => {
 // Put /users/:id (Cập nhật user theo ID)
 exports.updateUser = async (req, res) => {
     try {
+        // Authorization: only admin or owner can update
+        const requester = req.user; // set by auth middleware
+        console.log(`[USER] PUT /users/${req.params.id} by ${requester?.id} role=${requester?.role}`);
+        if (!requester) return res.status(401).json({ message: 'Unauthorized' });
+        if (requester.role !== 'admin' && requester.id !== req.params.id) {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+
         const user = await User.findById(req.params.id); // Tìm user theo ID
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Validate and apply updates
+        if (req.body.name !== undefined) {
+            if (typeof req.body.name !== 'string' || req.body.name.trim().length < 2) return res.status(400).json({ message: 'Invalid name' });
+            user.name = req.body.name.trim();
+        }
+        if (req.body.email !== undefined) {
+            // basic email check
+            if (typeof req.body.email !== 'string' || !req.body.email.includes('@')) return res.status(400).json({ message: 'Invalid email' });
+            // avoid duplicate email
+            const existing = await User.findOne({ email: req.body.email });
+            if (existing && existing._id.toString() !== user._id.toString()) return res.status(400).json({ message: 'Email already in use' });
+            user.email = req.body.email;
+        }
+        if (req.body.password !== undefined) {
+            if (typeof req.body.password !== 'string' || req.body.password.length < 6) return res.status(400).json({ message: 'Password too short (min 6 chars)' });
+            user.password = await bcrypt.hash(req.body.password, 10);
         }
     const requester = req.user; // { id, role }
 
@@ -75,6 +100,14 @@ exports.updateUser = async (req, res) => {
     }
     if (req.body.email) user.email = req.body.email;
     if (req.body.role) user.role = req.body.role;
+        if (req.body.role !== undefined) {
+            // only admin can change role
+            if (requester.role !== 'admin') return res.status(403).json({ message: 'Forbidden: only admin can change role' });
+            if (!['user', 'admin', 'moderator'].includes(req.body.role)) return res.status(400).json({ message: 'Invalid role' });
+            user.role = req.body.role;
+        }
+
+        user.updatedAt = Date.now();
         const updatedUser = await user.save();
         res.json(sanitize(updatedUser));
     } catch (err) {
@@ -89,8 +122,8 @@ exports.deleteUser = async (req, res) => {
         const requester = req.user; // set by auth middleware
         // allow if admin or deleting own account
         if (!requester) return res.status(401).json({ message: 'Unauthorized' });
-        if (requester.role !== 'admin' && requester.id !== targetId) {
-            return res.status(403).json({ message: 'Forbidden' });
+        if (requester.role !== 'admin' && requester.id !== req.params.id) {
+          return res.status(403).json({ message: 'Forbidden' });
         }
 
         const deleted = await User.findByIdAndDelete(targetId);
@@ -171,13 +204,20 @@ exports.uploadAvatar = async (req, res) => {
 };
 
 // Upload avatar file (multer memory buffer) to Cloudinary
+// This resizes the image to 500x500 (cover) using Sharp before uploading.
 exports.uploadAvatarFile = async (req, res) => {
     try {
         if (!req.file || !req.file.buffer) return res.status(400).json({ message: 'No file uploaded' });
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const bufferStream = streamifier.createReadStream(req.file.buffer);
+        // Resize with Sharp to 500x500 and convert to JPEG
+        const resizedBuffer = await sharp(req.file.buffer)
+            .resize(500, 500, { fit: 'cover' })
+            .jpeg({ quality: 85 })
+            .toBuffer();
+
+        const bufferStream = streamifier.createReadStream(resizedBuffer);
 
         const uploadStream = cloudinary.uploader.upload_stream({ folder: 'avatars', resource_type: 'image' }, async (error, result) => {
             if (error) {
