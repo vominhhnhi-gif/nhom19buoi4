@@ -6,6 +6,7 @@ import AuthForm from './components/AuthForm';
 import Register from './components/Register';
 import Profile from './components/Profile';
 import AdminUserList from './components/AdminUserList';
+import AdminLogs from './components/AdminLogs';
 import UserDetail from './components/UserDetail';
 import RequireRole from './components/RequireRole';
 import ForgotPassword from './components/ForgotPassword';
@@ -80,6 +81,18 @@ function App() {
                 token ? (
                   <RequireRole allowedRoles={[ 'admin', 'moderator' ]} currentUser={currentUser}>
                     <AdminUserList currentUser={currentUser} />
+                  </RequireRole>
+                ) : (
+                  <AuthForm onAuth={handleAuth} />
+                )
+              }
+            />
+            <Route
+              path="/admin/logs"
+              element={
+                token ? (
+                  <RequireRole allowedRoles={[ 'admin', 'moderator' ]} currentUser={currentUser}>
+                    <AdminLogs />
                   </RequireRole>
                 ) : (
                   <AuthForm onAuth={handleAuth} />

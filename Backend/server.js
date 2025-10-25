@@ -22,16 +22,26 @@ app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 
 
 // users routes
-const userRouter = require('./routes/user');
-app.use('/users', userRouter);
+// Helper to safely load route modules so a single broken route file doesn't crash the whole server
+function safeLoadRoute(mountPath, modulePath) {
+	try {
+		// require the route module and mount it
+		const router = require(modulePath);
+		app.use(mountPath, router);
+	} catch (e) {
+		console.error(`Failed to load route ${modulePath} mounted at ${mountPath}:`, e && e.stack ? e.stack.split('\n')[0] : e);
+		// mount a fallback that returns 500 for any requests to this mount point
+		app.use(mountPath, (req, res) => res.status(500).json({ message: 'Route unavailable due to server error' }));
+	}
+}
 
-// auth routes
-const authRouter = require('./routes/auth');
-app.use('/auth', authRouter);
+safeLoadRoute('/users', './routes/user');
+safeLoadRoute('/auth', './routes/auth');
+safeLoadRoute('/profile', './routes/profile');
+safeLoadRoute('/admin', './routes/admin');
 
-// profile routes
-const profileRouter = require('./routes/profile');
-app.use('/profile', profileRouter);
+// simple health-check endpoint to confirm the server is reachable
+app.get('/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

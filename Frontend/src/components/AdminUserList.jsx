@@ -196,7 +196,10 @@ const AdminUserList = ({ currentUser }) => {
                     <Button variant="danger" onClick={handleBulkDelete}><Trash2 className="w-4 h-4" /> Xóa</Button>
                   </div>
                 ) : (
-                  <Button onClick={fetchUsers} className="hidden md:inline-flex">Làm mới</Button>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={() => navigate('/admin/logs')} className="hidden md:inline-flex">Xem nhật ký</Button>
+                    <Button onClick={fetchUsers} className="hidden md:inline-flex">Làm mới</Button>
+                  </div>
                 )
               ) : (
                 <Button onClick={fetchUsers} className="hidden md:inline-flex">Làm mới</Button>
