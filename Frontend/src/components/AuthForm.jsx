@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import api from '../lib/api';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { login, fetchProfile } from '../features/authSlice';
 import { LogIn, Key } from 'lucide-react';
 import BackButton from './BackButton';
 import Button from './ui/Button';
@@ -18,17 +19,20 @@ const AuthForm = ({ onAuth }) => {
 
     const navigate = useNavigate();
 
+    const dispatch = useDispatch();
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
         try {
-            const res = await api.post('/auth/login', { email, password });
-            const token = res.data?.token;
-            if (!token) throw new Error('Không nhận được token');
-            if (onAuth) onAuth(token);
+            // dispatch login thunk and unwrap result
+            const result = await dispatch(login({ email, password })).unwrap();
+            // successfully got token, now fetch profile
+            await dispatch(fetchProfile()).unwrap();
+            navigate('/');
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Đăng nhập thất bại');
+            setError(err?.message || err?.response?.data?.message || 'Đăng nhập thất bại');
         } finally {
             setLoading(false);
         }
