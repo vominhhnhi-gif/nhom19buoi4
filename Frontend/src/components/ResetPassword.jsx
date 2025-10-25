@@ -16,6 +16,7 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -156,7 +157,7 @@ const ResetPassword = () => {
           ) : (
             /* Success State */
             <div className="text-center space-y-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4 success-badge">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
               <div>
@@ -164,9 +165,11 @@ const ResetPassword = () => {
                 <p className="text-gray-600">{message}</p>
               </div>
 
-              <Link to="/login">
-                <Button variant="secondary" className="px-6 py-3">Quay lại đăng nhập</Button>
-              </Link>
+              <div className="flex items-center justify-center gap-3">
+                <Link to="/login">
+                  <Button variant="secondary" className="px-6 py-3">Quay lại đăng nhập</Button>
+                </Link>
+              </div>
             </div>
           )}
         </Card>
