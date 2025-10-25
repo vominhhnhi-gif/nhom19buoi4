@@ -210,6 +210,11 @@ exports.uploadAvatar = async (req, res) => {
 exports.uploadAvatarFile = async (req, res) => {
     try {
         if (!req.file || !req.file.buffer) return res.status(400).json({ message: 'No file uploaded' });
+        // Basic mime-type validation to ensure an image was uploaded
+        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowed.includes(req.file.mimetype)) {
+            return res.status(400).json({ message: 'Invalid file type. Only JPEG, PNG and WEBP are allowed.' });
+        }
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
