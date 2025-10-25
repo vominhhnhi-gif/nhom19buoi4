@@ -17,6 +17,10 @@ const LogSchema = new mongoose.Schema(
 				'logout',
 				'profile_update',
 				'avatar_upload',
+				'signup',
+				'password_reset_requested',
+				'password_reset',
+				'password_reset_success'
 			],
 		},
 		ip: { type: String, index: true },

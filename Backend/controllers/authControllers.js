@@ -143,10 +143,11 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// Reset password with token
+// Reset password with token (accept token in URL param or body)
 exports.resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const token = req.params?.token || req.body?.token;
+    const { password } = req.body;
     if (!token || !password) return res.status(400).json({ message: 'token and new password required' });
 
     let payload;
