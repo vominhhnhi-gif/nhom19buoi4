@@ -15,10 +15,16 @@ mongoose.connect(process.env.MONGODB_URI, {
 	.then(() => console.log('Kết nối MongoDB thành công!'))
 	.catch((err) => console.error('Kết nối MongoDB thất bại:', err));
 
-// Thêm CORS middleware - cho phép credentials từ frontend cụ thể
+// CORS middleware - allow all origins (development) or specific origin (production)
 const cors = require('cors');
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
-app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
+const isDevelopment = process.env.NODE_ENV !== 'production';
+const corsOptions = isDevelopment 
+  ? { origin: true, credentials: true } // Allow all origins in development
+  : { 
+      origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+      credentials: true 
+    };
+app.use(cors(corsOptions));
 
 
 // users routes
@@ -44,6 +50,11 @@ safeLoadRoute('/admin', './routes/admin');
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const HOST = process.env.HOST || '0.0.0.0'; // Listen on all network interfaces
+app.listen(PORT, HOST, () => {
+	console.log(`Server running on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+	console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+	console.log(`CORS: ${isDevelopment ? 'Allow all origins' : 'Restricted to ' + process.env.FRONTEND_ORIGIN}`);
+});
 
 module.exports = app;
