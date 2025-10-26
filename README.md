@@ -172,7 +172,7 @@ Sau khi cả hai server chạy, mở trình duyệt tới `http://localhost:5173
 - email: `admin@example.com`
 - password: `123456`
 
----
+--
 
 Cám ơn!
 
