@@ -16,7 +16,7 @@ Tài liệu này mô tả nhanh kiến trúc, cách chạy project trên máy, b
 
 ---
 ## Video demo dự án
-Bạn có thể xem video demo bằng cách bấm vào liên kết bên dưới (mở file video raw trong trình duyệt):
+Bạn có thể xem video demo bằng cách bấm vào liên kết bên dưới :
 ![drive](https://drive.google.com/file/d/1FkjW_SbUTyHMc_Acmjv5W2sOtgB4Y4O-/view?usp=sharing)
 
 Lưu ý: GitHub/Markdown không luôn hiển thị trình phát video trực tiếp trong `README.md` khi dùng cú pháp ảnh (`![]()`), nên tốt nhất là mở file raw hoặc host video trên YouTube để nhúng/preview dễ dàng.
