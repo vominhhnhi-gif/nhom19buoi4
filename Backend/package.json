@@ -20,19 +20,18 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "express": "^5.1.0",
+    "express": "^4.21.0",
     "jsonwebtoken": "^9.0.0",
-    "mongodb": "^6.20.0",
-    "mongoose": "^8.19.2",
+    "mongodb": "^5.9.0",
+    "mongoose": "^7.7.0",
     "multer": "^1.4.5-lts.1",
-    "nodemon": "^3.1.10",
+    "nodemailer": "^6.9.3",
     "sharp": "^0.34.4",
     "streamifier": "^0.1.1"
-    ,
-    "nodemailer": "^6.9.3"
   },
   "devDependencies": {
     "@types/multer": "^2.0.0",
-    "@types/sharp": "^0.31.1"
+    "@types/sharp": "^0.31.1",
+    "nodemon": "^3.1.10"
   }
 }
